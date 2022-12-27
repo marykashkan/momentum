@@ -1,7 +1,6 @@
 import playList from "./playList.js";
 
 (function () {
-
   // Time and calendar
 
   const time = document.querySelector(".time");
@@ -23,7 +22,7 @@ import playList from "./playList.js";
   const weatherError = document.querySelector(".weather-error");
   const quote = document.querySelector(".quote");
   const author = document.querySelector(".author");
-  let randomNumQuote = getRandomNum(0, 5);
+  let randomNumQuote = getRandomNum(0, 8);
   const changeQuote = document.querySelector(".change-quote");
   let isPlay = false;
   const playItem = document.querySelector(".play");
@@ -33,6 +32,17 @@ import playList from "./playList.js";
   const playNextItem = document.querySelector(".play-next");
   const liItem = document.querySelector("li");
   const titleAll = [];
+  const playerDuration = document.querySelector(".player-duration");
+  let sec;
+  let min = 0;
+  let mySetInterval;
+  let mySetInterval2;
+  const playerTimer = document.querySelector(".player-timer");
+  let devidedTimerArray;
+  let devidedDurationTime;
+  let timeSec;
+  const soundPicture = document.querySelector(".sound-pic");
+  let isMute = false;
 
   function showTime() {
     const date = new Date();
@@ -72,7 +82,7 @@ import playList from "./playList.js";
   }
 
   window.addEventListener("load", () => {
-    cityText.value = "Минск";
+    getLocalStorage();
     getWeather();
   });
 
@@ -84,15 +94,33 @@ import playList from "./playList.js";
   }
   window.addEventListener("beforeunload", setLocalStorage);
 
+  function setTimerLocalStorage() {
+    localStorage.setItem("timer", playerTimer.textContent);
+  }
+
+  function getTimerLocalStorage() {
+    if (localStorage.getItem("timer")) {
+      playerTimer.textContent = localStorage.getItem("timer");
+      devidedTimerArray = playerTimer.textContent.split(":");
+      sec = `${devidedTimerArray[1]}`;
+      audio.currentTime = sec;
+    }
+  }
+
   function getLocalStorage() {
     if (localStorage.getItem("name")) {
       name.value = localStorage.getItem("name");
+    } else {
+      cityText.value = "Минск";
     }
     if (localStorage.getItem("cityText")) {
       cityText.value = localStorage.getItem("cityText");
     }
+    if (localStorage.getItem("timer")) {
+      playerTimer.textContent = "00:00";
+      localStorage.setItem("timer", playerTimer.textContent);
+    }
   }
-  window.addEventListener("load", getLocalStorage);
 
   // Slyder
 
@@ -171,8 +199,8 @@ import playList from "./playList.js";
   // Quote
 
   function getNextQuote() {
-    if (randomNumQuote === 5) {
-      randomNumQuote = 1;
+    if (randomNumQuote === 8) {
+      randomNumQuote = 0;
     } else {
       randomNumQuote = randomNumQuote + 1;
     }
@@ -197,11 +225,27 @@ import playList from "./playList.js";
   function playAudio() {
     audio.src = playList[playNum].src;
     audio.currentTime = 0;
+    audio.title = playList[playNum].title;
     audio.play();
+    audio.durationTime = playList[playNum].duration;
+    devidedDurationTime = audio.durationTime.split(":");
+    timeSec = +devidedDurationTime[0] * 60 + +devidedDurationTime[1];
+    document.querySelector(".player-range").max = `${timeSec / 10}`;
+    initTime();
+    playerDuration.textContent = `${playList[playNum].duration}`;
+    for (let titleLi of titleAll) {
+      if (titleLi.classList.contains("selected")) {
+        titleLi.classList.remove("selected");
+      }
+    }
+    colorButton();
+    ended;
   }
 
   function pauseAudio() {
     audio.pause();
+    clearInterval(mySetInterval);
+    setTimerLocalStorage();
   }
 
   function toggleBtn() {
@@ -246,7 +290,125 @@ import playList from "./playList.js";
     li.classList.add("play-item");
     li.textContent = `${el.title}`;
     playListContainer.append(li);
-    titleAll.push(el.title);
+    titleAll.push(li);
   });
-  
+
+  function colorButton() {
+    for (let i = 0; i < titleAll.length; i++) {
+      if (audio.title === titleAll[i].textContent) {
+        titleAll[i].classList.add("selected");
+      }
+    }
+  }
+
+  function initTime() {
+    sec = 0;
+    getTimerLocalStorage();
+    mySetInterval = setInterval(stopwatch, 1000);
+  }
+
+  function stopwatch() {
+    sec++;
+    if (sec >= 60) {
+      min++;
+      sec = sec - 60;
+    }
+    if (sec < 10) {
+      if (min < 10) {
+        playerTimer.textContent = "0" + min + ":0" + sec;
+      } else {
+        playerTimer.textContent = min + ":0" + sec;
+      }
+    } else {
+      if (min < 10) {
+        playerTimer.textContent = "0" + min + ":" + sec;
+      } else {
+        playerTimer.textContent = min + ":" + sec;
+      }
+    }
+  }
+
+  function changeEndingAudio() {
+    if (sec > +timeSec) {
+      console.log(sec > +timeSec);
+      audio.pause();
+      playNum = playNum + 1;
+    }
+  }
+
+  function toggleSound() {
+    soundPicture.classList.toggle("no-mute");
+    if (soundPicture.classList.contains("no-mute")) {
+      isMute = true;
+    } else {
+      isMute - false;
+    }
+  }
+
+  soundPicture.addEventListener("click", toggleSound);
+
+  const toDoItems = document.querySelector(".to-do-items");
+  const toDoItemsStorage = localStorage.getItem("toDoItems");
+  const toDoText = document.querySelector(".to-do-text");
+  const toDoItem = document.querySelector(".to-do-item");
+  const toDoAddButton = document.querySelector(".to-do-add");
+  const toDoInput = document.querySelector(".to-do");
+  const toDoList = document.querySelector(".to-do-list");
+  const deleteItem = document.querySelector(".delete");
+
+  const toDo = {
+    print() {
+      console.log(555);
+    },
+    init() {
+      if (toDoItemsStorage) {
+        toDoItems.innerHTML = toDoItemsStorage;
+      }
+      document.addEventListener("click", this.action.bind(this));
+    },
+    save() {
+      localStorage.setItem("toDoItems", toDoItems.innerHTML);
+    },
+    add() {
+      if (!toDoInput.value) {
+        return;
+      }
+
+      toDoList.style.top = "0px";
+      var li = document.createElement("li");
+      li.className = "to-do-item";
+      li.innerHTML = `${toDoInput.value}<div class="done"></div>
+      <div class="delete"></div>`;
+      toDoItems.append(li);
+      toDoInput.value = "";
+    },
+    action() {
+      toDoItems.onclick = function (event) {
+        let target = event.target;
+        if (target.classList.contains("delete")) {
+          console.log(target);
+          document.querySelector(".delete").parentElement.remove();
+          return;
+        }
+        console.log("no");
+      };
+    },
+    close() {
+      console.log("d");
+    },
+  };
+
+  toDoAddButton.addEventListener("click", toDo.add);
+
+  document
+    .querySelector("input[name=do]")
+    .addEventListener("keydown", function (e) {
+      if (e.keyCode === 13) {
+        e.preventDefault();
+        toDo.add();
+      }
+    });
+
+  toDo.action();
+  toDo.save();
 })();
