@@ -84,6 +84,7 @@ import playList from "./playList.js";
   window.addEventListener("load", () => {
     getLocalStorage();
     getWeather();
+    audio.volume = 0.5;
   });
 
   // Greeting
@@ -91,6 +92,7 @@ import playList from "./playList.js";
   function setLocalStorage() {
     localStorage.setItem("name", name.value);
     localStorage.setItem("cityText", cityText.value);
+    localStorage.setItem("toDoItems", toDoItems.innerHTML);
   }
   window.addEventListener("beforeunload", setLocalStorage);
 
@@ -119,6 +121,9 @@ import playList from "./playList.js";
     if (localStorage.getItem("timer")) {
       playerTimer.textContent = "00:00";
       localStorage.setItem("timer", playerTimer.textContent);
+    }
+    if (localStorage.getItem("toDoItems")) {
+      toDoItems.innerHTML = localStorage.getItem("toDoItems");
     }
   }
 
@@ -239,8 +244,19 @@ import playList from "./playList.js";
       }
     }
     colorButton();
-    ended;
   }
+
+  const playerVolume = document.querySelector(".player-volume");
+
+  function changeVolume() {
+    for (let i = 0; i <= 1; i = i + 0.1) {
+      if (+playerVolume.value === i) {
+        audio.volume = i;
+      }
+    }
+  }
+
+  playerVolume.addEventListener("click", changeVolume);
 
   function pauseAudio() {
     audio.pause();
@@ -338,10 +354,13 @@ import playList from "./playList.js";
 
   function toggleSound() {
     soundPicture.classList.toggle("no-mute");
+    console.log(audio.volume);
     if (soundPicture.classList.contains("no-mute")) {
-      isMute = true;
+      audio.volume = 0;
+      console.log(audio.volume);
     } else {
-      isMute - false;
+      audio.volume = 0.5;
+      console.log(audio.volume);
     }
   }
 
@@ -357,9 +376,6 @@ import playList from "./playList.js";
   const deleteItem = document.querySelector(".delete");
 
   const toDo = {
-    print() {
-      console.log(555);
-    },
     init() {
       if (toDoItemsStorage) {
         toDoItems.innerHTML = toDoItemsStorage;
@@ -367,7 +383,8 @@ import playList from "./playList.js";
       document.addEventListener("click", this.action.bind(this));
     },
     save() {
-      localStorage.setItem("toDoItems", toDoItems.innerHTML);
+      //localStorage.setItem("toDoItems", toDoItems.innerHTML);
+      //console.log(toDoItems.innerHTML)
     },
     add() {
       if (!toDoInput.value) {
